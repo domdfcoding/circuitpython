@@ -68,7 +68,6 @@
 #include "peripherals/rtc.h"
 
 #include STM32_HAL_H
-#include "st_driver/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rtc.h"
 
 void NVIC_SystemReset(void) NORETURN;
 
