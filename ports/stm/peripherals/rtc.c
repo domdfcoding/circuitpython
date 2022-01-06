@@ -102,7 +102,7 @@ uint64_t stm32_peripherals_rtc_raw_ticks(uint8_t *subticks) {
     __enable_irq();
 
     uint32_t date2 = (uint32_t)(RTC->DR & RTC_DR_RESERVED_MASK);
-	(void) (date2);
+    (void)(date2);
 
     uint32_t subseconds = rtc_clock_frequency - 1 - ssr;
 
@@ -136,8 +136,8 @@ uint64_t stm32_peripherals_rtc_raw_ticks(uint8_t *subticks) {
     return raw_ticks;
 }
 
-RTC_DateTypeDef GetDate;  //Get date structure
-RTC_TimeTypeDef GetTime;  //Get time structure
+RTC_DateTypeDef GetDate;  // Get date structure
+RTC_TimeTypeDef GetTime;  // Get time structure
 
 
 void common_hal_rtc_get_time(timeutils_struct_time_t *tm) {
@@ -147,7 +147,9 @@ void common_hal_rtc_get_time(timeutils_struct_time_t *tm) {
 
     HAL_RTC_GetTime(&hrtc, &GetTime, RTC_FORMAT_BIN);
     HAL_RTC_GetDate(&hrtc, &GetDate, RTC_FORMAT_BIN);
-  tm->tm_year = GetDate.Year+1952;
+    
+    // Offset was necessary to get the correct year. Don't know why though.
+    tm->tm_year = GetDate.Year+1952;
     tm->tm_mon = GetDate.Month;
     tm->tm_mday = GetDate.Date;
     tm->tm_wday = 1;
@@ -171,11 +173,11 @@ void common_hal_rtc_set_time(timeutils_struct_time_t *tm) {
     RTC_TimeTypeDef sTime = {0};
     RTC_DateTypeDef sDate = {0};
 
-   if (tm->tm_wday == 6) {
-       tm->tm_wday = 0;
-   } else {
-       tm->tm_wday += 1;
-   }
+    if (tm->tm_wday == 6) {
+        tm->tm_wday = 0;
+    } else {
+        tm->tm_wday += 1;
+    }
 
     sTime.Hours = tm->tm_hour;
     sTime.Minutes = tm->tm_min;
@@ -183,20 +185,18 @@ void common_hal_rtc_set_time(timeutils_struct_time_t *tm) {
     sTime.TimeFormat = RTC_HOURFORMAT_24;
     sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
     sTime.StoreOperation = RTC_STOREOPERATION_RESET;
-    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
-    {
+    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK) {
+        // TODO: error handler
         printf("Oh Snap! in RTC_SetTime");
-    //    Error_Handler();
     }
     sDate.WeekDay = tm->tm_wday;
     sDate.Month = tm->tm_mon;
     sDate.Date = tm->tm_mday;
     sDate.Year = tm->tm_year;
 
-    if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK)
-    {
+    if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK) {
+        // TODO: error handler
         printf("Oh Snap! in RTC_SetDate");
-    //    Error_Handler();
     }
 
 }

@@ -28,7 +28,9 @@
 
 #include "py/runtime.h"
 
-void common_hal_rtc_init(void) {}
+void common_hal_rtc_init(void) {
+  
+}
 
 // Initialization and get/set time are handled by ports/stm/peripherals/rtc.c
 

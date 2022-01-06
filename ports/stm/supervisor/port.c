@@ -177,12 +177,6 @@ static volatile uint32_t systick_ms;
 
 
 // from https://github.com/dbridges/stm32f4-discovery-lib/blob/master/StdPeriph/src/stm32f4xx_rtc.c
-#define RTC_FLAGS_MASK          ((uint32_t)(RTC_FLAG_TSOVF | RTC_FLAG_TSF | RTC_FLAG_WUTF | \
-                                            RTC_FLAG_ALRBF | RTC_FLAG_ALRAF | RTC_FLAG_INITF | \
-                                            RTC_FLAG_RSF | RTC_FLAG_INITS | RTC_FLAG_WUTWF | \
-                                            RTC_FLAG_ALRBWF | RTC_FLAG_ALRAWF | RTC_FLAG_TAMP1F | \
-                                            RTC_FLAG_RECALPF | RTC_FLAG_SHPF))
-
 /**
   * @brief  Checks whether the specified RTC flag is set or not.
   * @param  RTC_FLAG: specifies the flag to check.
@@ -203,27 +197,23 @@ static volatile uint32_t systick_ms;
   *            @arg RTC_FLAG_ALRAWF: Alarm A write flag
   * @retval The new state of RTC_FLAG (SET or RESET).
   */
-FlagStatus RTC_GetFlagStatus(uint32_t RTC_FLAG)
-{
-  FlagStatus bitstatus = RESET;
-  uint32_t tmpreg = 0;
+FlagStatus RTC_GetFlagStatus(uint32_t RTC_FLAG) {
+    FlagStatus bitstatus = RESET;
+    uint32_t tmpreg = 0;
 
-  /* Check the parameters */
-  assert_param(IS_RTC_GET_FLAG(RTC_FLAG));
+    /* Check the parameters */
+    assert_param(IS_RTC_GET_FLAG(RTC_FLAG));
 
-  /* Get all the flags */
-  tmpreg = (uint32_t)(RTC->ISR & RTC_FLAGS_MASK);
+    /* Get all the flags */
+    tmpreg = (uint32_t)(RTC->ISR & RTC_FLAGS_MASK);
 
-  /* Return the status of the flag */
-  if ((tmpreg & RTC_FLAG) != (uint32_t)RESET)
-  {
-    bitstatus = SET;
-  }
-  else
-  {
-    bitstatus = RESET;
-  }
-  return bitstatus;
+    /* Return the status of the flag */
+    if ((tmpreg & RTC_FLAG) != (uint32_t)RESET) {
+        bitstatus = SET;
+    } else {
+        bitstatus = RESET;
+    }
+    return bitstatus;
 }
 
 
@@ -250,13 +240,12 @@ safe_mode_t port_init(void) {
     }
     #endif
 
-    if(RTC_GetFlagStatus(RTC_FLAG_INITS)==RESET)
-        // Initialization freezes clock so only perform this if new vbat/vdd power-up
-        {
-            FreshBoot = true;
-            __HAL_RCC_BACKUPRESET_FORCE();
-            __HAL_RCC_BACKUPRESET_RELEASE();
-        }
+    if (RTC_GetFlagStatus(RTC_FLAG_INITS)==RESET) {
+        // Reinitialize clock only on vbat/vdd power-up
+        FreshBoot = true;
+        __HAL_RCC_BACKUPRESET_FORCE();
+        __HAL_RCC_BACKUPRESET_RELEASE();
+    }
 
     #endif
 
