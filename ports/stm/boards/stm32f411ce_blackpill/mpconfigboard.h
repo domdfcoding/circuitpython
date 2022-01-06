@@ -33,8 +33,9 @@
 #define FLASH_PAGE_SIZE             (0x4000)
 
 #define HSE_VALUE ((uint32_t)25000000)
+#define LSE_VALUE ((uint32_t)32768)
 #define BOARD_NO_VBUS_SENSE (1)
-#define BOARD_HAS_LOW_SPEED_CRYSTAL (0)
+#define BOARD_HAS_LOW_SPEED_CRYSTAL (1)
 
 // On-board flash
 // #define SPI_FLASH_MOSI_PIN          (&pin_PA07)
