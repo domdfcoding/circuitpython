@@ -23,7 +23,7 @@ ifeq ($(MCU_SERIES),F4)
         CIRCUITPY_I2CPERIPHERAL ?= 0
         CIRCUITPY_NVM ?= 0
         CIRCUITPY_ROTARYIO ?= 0
-        CIRCUITPY_RTC ?= 0
+        CIRCUITPY_RTC ?= 1
         USB_NUM_ENDPOINT_PAIRS = 4
 endif
 

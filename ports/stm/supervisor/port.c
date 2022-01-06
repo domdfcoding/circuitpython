@@ -30,6 +30,7 @@
 #include "supervisor/board.h"
 #include "supervisor/port.h"
 #include "shared/timeutils/timeutils.h"
+#include "shared-bindings/rtc/__init__.h"
 
 #include "common-hal/microcontroller/Pin.h"
 #include "shared-bindings/microcontroller/__init__.h"
@@ -67,6 +68,7 @@
 #include "peripherals/rtc.h"
 
 #include STM32_HAL_H
+#include "st_driver/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rtc.h"
 
 void NVIC_SystemReset(void) NORETURN;
 
@@ -173,9 +175,63 @@ __attribute__((used, naked)) void Reset_Handler(void) {
 // Low power clock variables
 static volatile uint32_t systick_ms;
 
+
+// from https://github.com/dbridges/stm32f4-discovery-lib/blob/master/StdPeriph/src/stm32f4xx_rtc.c
+#define RTC_FLAGS_MASK          ((uint32_t)(RTC_FLAG_TSOVF | RTC_FLAG_TSF | RTC_FLAG_WUTF | \
+                                            RTC_FLAG_ALRBF | RTC_FLAG_ALRAF | RTC_FLAG_INITF | \
+                                            RTC_FLAG_RSF | RTC_FLAG_INITS | RTC_FLAG_WUTWF | \
+                                            RTC_FLAG_ALRBWF | RTC_FLAG_ALRAWF | RTC_FLAG_TAMP1F | \
+                                            RTC_FLAG_RECALPF | RTC_FLAG_SHPF))
+
+/**
+  * @brief  Checks whether the specified RTC flag is set or not.
+  * @param  RTC_FLAG: specifies the flag to check.
+  *          This parameter can be one of the following values:
+  *            @arg RTC_FLAG_RECALPF: RECALPF event flag.
+  *            @arg RTC_FLAG_TAMP1F: Tamper 1 event flag
+  *            @arg RTC_FLAG_TSOVF: Time Stamp OverFlow flag
+  *            @arg RTC_FLAG_TSF: Time Stamp event flag
+  *            @arg RTC_FLAG_WUTF: WakeUp Timer flag
+  *            @arg RTC_FLAG_ALRBF: Alarm B flag
+  *            @arg RTC_FLAG_ALRAF: Alarm A flag
+  *            @arg RTC_FLAG_INITF: Initialization mode flag
+  *            @arg RTC_FLAG_RSF: Registers Synchronized flag
+  *            @arg RTC_FLAG_INITS: Registers Configured flag
+  *            @arg RTC_FLAG_SHPF: Shift operation pending flag.
+  *            @arg RTC_FLAG_WUTWF: WakeUp Timer Write flag
+  *            @arg RTC_FLAG_ALRBWF: Alarm B Write flag
+  *            @arg RTC_FLAG_ALRAWF: Alarm A write flag
+  * @retval The new state of RTC_FLAG (SET or RESET).
+  */
+FlagStatus RTC_GetFlagStatus(uint32_t RTC_FLAG)
+{
+  FlagStatus bitstatus = RESET;
+  uint32_t tmpreg = 0;
+
+  /* Check the parameters */
+  assert_param(IS_RTC_GET_FLAG(RTC_FLAG));
+
+  /* Get all the flags */
+  tmpreg = (uint32_t)(RTC->ISR & RTC_FLAGS_MASK);
+
+  /* Return the status of the flag */
+  if ((tmpreg & RTC_FLAG) != (uint32_t)RESET)
+  {
+    bitstatus = SET;
+  }
+  else
+  {
+    bitstatus = RESET;
+  }
+  return bitstatus;
+}
+
+
 safe_mode_t port_init(void) {
     HAL_Init(); // Turns on SysTick
     __HAL_RCC_SYSCFG_CLK_ENABLE();
+
+    bool FreshBoot = false;
 
     #if CPY_STM32F4 || CPY_STM32L4
     __HAL_RCC_PWR_CLK_ENABLE();
@@ -194,14 +250,19 @@ safe_mode_t port_init(void) {
     }
     #endif
 
-    __HAL_RCC_BACKUPRESET_FORCE();
-    __HAL_RCC_BACKUPRESET_RELEASE();
+    if(RTC_GetFlagStatus(RTC_FLAG_INITS)==RESET)
+        // Initialization freezes clock so only perform this if new vbat/vdd power-up
+        {
+            FreshBoot = true;
+            __HAL_RCC_BACKUPRESET_FORCE();
+            __HAL_RCC_BACKUPRESET_RELEASE();
+        }
 
     #endif
 
     stm32_peripherals_clocks_init();
     stm32_peripherals_gpio_init();
-    stm32_peripherals_rtc_init();
+    stm32_peripherals_rtc_init(FreshBoot);
 
     __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
     stm32_peripherals_rtc_reset_alarms();
@@ -264,6 +325,9 @@ void reset_port(void) {
     #endif
     #if CIRCUITPY_PULSEIO || CIRCUITPY_ALARM
     exti_reset();
+    #endif
+    #if CIRCUITPY_RTC
+    rtc_reset();
     #endif
 }
 

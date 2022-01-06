@@ -4,6 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2021 Lucian Copeland for Adafruit Industries
+ * Copyright (c) 2022 Dominic Davis-Foster
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +27,14 @@
 
 #include "peripherals/rtc.h"
 #include STM32_HAL_H
+#include <stdio.h>
 
 #include "py/mpconfig.h"
 #include "py/gc.h"
 #include "py/obj.h"
 #include "py/runtime.h"
 #include "shared/timeutils/timeutils.h"
+// #include "st_driver/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rtc.h"
 
 // Default period for ticks is 1/1024 second
 #define TICK_DIVISOR 1024
@@ -60,9 +63,11 @@ uint32_t stm32_peripherals_get_rtc_freq(void) {
     return rtc_clock_frequency;
 }
 
-void stm32_peripherals_rtc_init(void) {
+void stm32_peripherals_rtc_init(bool fresh_boot) {
     // RTC oscillator selection is handled in peripherals/<family>/<line>/clocks.c
-    __HAL_RCC_RTC_ENABLE();
+    if (fresh_boot) {
+        __HAL_RCC_RTC_ENABLE();
+    }
     hrtc.Instance = RTC;
     hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
     // Divide async as little as possible so that we have rtc_clock_frequency count in subseconds.
@@ -71,7 +76,9 @@ void stm32_peripherals_rtc_init(void) {
     hrtc.Init.SynchPrediv = rtc_clock_frequency - 1;
     hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
 
-    HAL_RTC_Init(&hrtc);
+    if (fresh_boot) {
+        HAL_RTC_Init(&hrtc);
+    }
     HAL_RTCEx_EnableBypassShadow(&hrtc);
     HAL_NVIC_EnableIRQ(RTC_Alarm_IRQn);
 }
@@ -93,6 +100,9 @@ uint64_t stm32_peripherals_rtc_raw_ticks(uint8_t *subticks) {
         ssr = (uint32_t)(RTC->SSR);
     }
     __enable_irq();
+
+    uint32_t date2 = (uint32_t)(RTC->DR & RTC_DR_RESERVED_MASK);
+	(void) (date2);
 
     uint32_t subseconds = rtc_clock_frequency - 1 - ssr;
 
@@ -125,6 +135,72 @@ uint64_t stm32_peripherals_rtc_raw_ticks(uint8_t *subticks) {
     uint64_t raw_ticks = ((uint64_t)TICK_DIVISOR) * (seconds_to_date + seconds_to_minute + seconds) + subseconds / 32;
     return raw_ticks;
 }
+
+RTC_DateTypeDef GetDate;  //Get date structure
+RTC_TimeTypeDef GetTime;  //Get time structure
+
+
+void common_hal_rtc_get_time(timeutils_struct_time_t *tm) {
+    // Disable IRQs to ensure we read all of the RTC registers as close in time as possible. Read
+    // SSR twice to make sure we didn't read across a tick.
+    __disable_irq();
+
+    HAL_RTC_GetTime(&hrtc, &GetTime, RTC_FORMAT_BIN);
+    HAL_RTC_GetDate(&hrtc, &GetDate, RTC_FORMAT_BIN);
+  tm->tm_year = GetDate.Year+1952;
+    tm->tm_mon = GetDate.Month;
+    tm->tm_mday = GetDate.Date;
+    tm->tm_wday = 1;
+//    tm->tm_wday = t.dotw;
+    tm->tm_hour = GetTime.Hours;
+    tm->tm_min = GetTime.Minutes;
+    tm->tm_sec = GetTime.Seconds;
+
+    if (tm->tm_wday == 0) {
+        tm->tm_wday = 6;
+    } else {
+        tm->tm_wday -= 1;
+    }
+
+    __enable_irq();
+
+}
+
+
+void common_hal_rtc_set_time(timeutils_struct_time_t *tm) {
+    RTC_TimeTypeDef sTime = {0};
+    RTC_DateTypeDef sDate = {0};
+
+   if (tm->tm_wday == 6) {
+       tm->tm_wday = 0;
+   } else {
+       tm->tm_wday += 1;
+   }
+
+    sTime.Hours = tm->tm_hour;
+    sTime.Minutes = tm->tm_min;
+    sTime.Seconds = tm->tm_sec;
+    sTime.TimeFormat = RTC_HOURFORMAT_24;
+    sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+    sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
+    {
+        printf("Oh Snap! in RTC_SetTime");
+    //    Error_Handler();
+    }
+    sDate.WeekDay = tm->tm_wday;
+    sDate.Month = tm->tm_mon;
+    sDate.Date = tm->tm_mday;
+    sDate.Year = tm->tm_year;
+
+    if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK)
+    {
+        printf("Oh Snap! in RTC_SetDate");
+    //    Error_Handler();
+    }
+
+}
+
 
 void stm32_peripherals_rtc_assign_wkup_callback(void (*callback)(void)) {
     wkup_callback = callback;
