@@ -197,22 +197,24 @@ static volatile uint32_t systick_ms;
   * @retval The new state of RTC_FLAG (SET or RESET).
   */
 FlagStatus RTC_GetFlagStatus(uint32_t RTC_FLAG) {
-    FlagStatus bitstatus = RESET;
-    uint32_t tmpreg = 0;
-
+    #if CIRCUITPY_RTC
+    // Always reset if RTC disabled
+    // RTC_FLAGS_MASK is not defined for all families e.g. stm32f7
     /* Check the parameters */
     assert_param(IS_RTC_GET_FLAG(RTC_FLAG));
 
     /* Get all the flags */
-    tmpreg = (uint32_t)(RTC->ISR & RTC_FLAGS_MASK);
+    uint32_t tmpreg = (RTC->ISR & RTC_FLAGS_MASK);
 
     /* Return the status of the flag */
     if ((tmpreg & RTC_FLAG) != (uint32_t)RESET) {
-        bitstatus = SET;
+        return SET;
     } else {
-        bitstatus = RESET;
+        return RESET;
     }
-    return bitstatus;
+    #else
+    return RESET;
+    #endif
 }
 
 
