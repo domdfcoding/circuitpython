@@ -31,7 +31,7 @@
 
 void shared_module_softencoder_state_init(rotaryio_incrementalencoder_obj_t *self, uint8_t quiescent_state) {
     self->state = quiescent_state;
-    self->sub_count = 0;
+    self->count = 0;
     common_hal_rotaryio_incrementalencoder_set_position(self, 0);
 }
 
@@ -60,24 +60,15 @@ void shared_module_softencoder_state_update(rotaryio_incrementalencoder_obj_t *s
     self->state = new_state;
 
     int8_t sub_incr = transitions[idx];
-
-    self->sub_count += sub_incr;
-
-    if (self->sub_count >= self->divisor) {
-        self->position += 1;
-        self->sub_count = 0;
-    } else if (self->sub_count <= -self->divisor) {
-        self->position -= 1;
-        self->sub_count = 0;
-    }
+    self->count += sub_incr;
 }
 
 mp_int_t common_hal_rotaryio_incrementalencoder_get_position(rotaryio_incrementalencoder_obj_t *self) {
-    return self->position;
+    return (self->count + self->position) / self->divisor;
 }
 
 void common_hal_rotaryio_incrementalencoder_set_position(rotaryio_incrementalencoder_obj_t *self, mp_int_t position) {
-    self->position = position;
+    self->position = position * self->divisor;
 }
 
 mp_int_t common_hal_rotaryio_incrementalencoder_get_divisor(rotaryio_incrementalencoder_obj_t *self) {
