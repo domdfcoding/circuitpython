@@ -34,6 +34,7 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 #include "shared/timeutils/timeutils.h"
+#include "py/mpprint.h"
 // #include "st_driver/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rtc.h"
 
 // Default period for ticks is 1/1024 second
@@ -78,7 +79,31 @@ void stm32_peripherals_rtc_init(bool fresh_boot) {
 
     if (fresh_boot) {
         HAL_RTC_Init(&hrtc);
+        RTC_TimeTypeDef sTime = {0};
+        RTC_DateTypeDef sDate = {0};
+
+        sTime.Hours = 0;
+        sTime.Minutes = 0;
+        sTime.Seconds = 0;
+        sTime.TimeFormat = RTC_HOURFORMAT_24;
+        sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+        sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+        if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK) {
+            // TODO: error handler
+            mp_printf(MP_PYTHON_PRINTER, "%S\n", "Oh Snap! in RTC_SetTime");
+        }
+        sDate.WeekDay = 3;
+        sDate.Month = 1;
+        sDate.Date = 1;
+        uint16_t year = 2020 - 1952;
+        sDate.Year = year;
+
+        if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK) {
+            // TODO: error handler
+            mp_printf(MP_PYTHON_PRINTER, "%S\n", "Oh Snap! in RTC_SetDate");
+        }
     }
+
     HAL_RTCEx_EnableBypassShadow(&hrtc);
     HAL_NVIC_EnableIRQ(RTC_Alarm_IRQn);
 }
@@ -187,7 +212,7 @@ void common_hal_rtc_set_time(timeutils_struct_time_t *tm) {
     sTime.StoreOperation = RTC_STOREOPERATION_RESET;
     if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK) {
         // TODO: error handler
-        printf("Oh Snap! in RTC_SetTime");
+        mp_printf(MP_PYTHON_PRINTER, "%S\n", "Oh Snap! in RTC_SetTime");
     }
     sDate.WeekDay = tm->tm_wday;
     sDate.Month = tm->tm_mon;
@@ -196,7 +221,7 @@ void common_hal_rtc_set_time(timeutils_struct_time_t *tm) {
 
     if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK) {
         // TODO: error handler
-        printf("Oh Snap! in RTC_SetDate");
+        mp_printf(MP_PYTHON_PRINTER, "%S\n", "Oh Snap! in RTC_SetDate");
     }
 
 }
