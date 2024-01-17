@@ -18,5 +18,7 @@
 #define DEFAULT_SPI_BUS_MOSI (&pin_GPIO11)
 #define DEFAULT_SPI_BUS_MISO (&pin_GPIO12)
 
+// #define MICROPY_HW_LED_STATUS (&pin_GPIO25)
+
 #define DEFAULT_UART_BUS_RX (&pin_GPIO5)
 #define DEFAULT_UART_BUS_TX (&pin_GPIO4)

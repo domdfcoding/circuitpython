@@ -13,3 +13,6 @@ CIRCUITPY_PICODVI = 1
 # Disable native USB host because it won't work alongside DVI anyway. (They both
 # use the second core.)
 CIRCUITPY_USB_HOST = 0
+
+# Include these Python libraries in firmware.
+FROZEN_MPY_DIRS += $(TOP)/frozen/Adafruit_CircuitPython_SD

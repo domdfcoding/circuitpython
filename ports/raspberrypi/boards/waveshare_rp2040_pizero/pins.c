@@ -71,7 +71,11 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_GP20), MP_ROM_PTR(&pin_GPIO20) },
     { MP_ROM_QSTR(MP_QSTR_GP21), MP_ROM_PTR(&pin_GPIO21) },
 
-    // DVI
+    { MP_ROM_QSTR(MP_QSTR_A2), MP_ROM_PTR(&pin_GPIO28) },
+    { MP_ROM_QSTR(MP_QSTR_A3), MP_ROM_PTR(&pin_GPIO29) },
+
+    // DVI VIDEO
+
     { MP_ROM_QSTR(MP_QSTR_CKN), MP_ROM_PTR(&pin_GPIO29) },
     { MP_ROM_QSTR(MP_QSTR_CKP), MP_ROM_PTR(&pin_GPIO28) },
     { MP_ROM_QSTR(MP_QSTR_D0N), MP_ROM_PTR(&pin_GPIO27) },
@@ -80,13 +84,17 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_D1P), MP_ROM_PTR(&pin_GPIO24) },
     { MP_ROM_QSTR(MP_QSTR_D2N), MP_ROM_PTR(&pin_GPIO23) },
     { MP_ROM_QSTR(MP_QSTR_D2P), MP_ROM_PTR(&pin_GPIO22) },
-    { MP_ROM_QSTR(MP_QSTR_CEC), MP_ROM_PTR(&pin_GPIO16) },
+    { MP_ROM_QSTR(MP_QSTR_DV_CEC), MP_ROM_PTR(&pin_GPIO16) },
+    { MP_ROM_QSTR(MP_QSTR_DV_SCL), MP_ROM_PTR(&pin_GPIO3) },
+    { MP_ROM_QSTR(MP_QSTR_DV_SDA), MP_ROM_PTR(&pin_GPIO2) },
 
-    // USB-HOST
+    { MP_ROM_QSTR(MP_QSTR_DISPLAY), MP_ROM_PTR(&displays[0].framebuffer_display)},
+
+    // USB Host
     { MP_ROM_QSTR(MP_QSTR_USB_HOST_DATA_PLUS), MP_ROM_PTR(&pin_GPIO6) },
     { MP_ROM_QSTR(MP_QSTR_USB_HOST_DATA_MINUS), MP_ROM_PTR(&pin_GPIO7) },
 
-    // SD
+    // SD Card
     { MP_ROM_QSTR(MP_QSTR_SD_SCK), MP_ROM_PTR(&pin_GPIO18) },
     { MP_ROM_QSTR(MP_QSTR_SD_MOSI), MP_ROM_PTR(&pin_GPIO19) },
     { MP_ROM_QSTR(MP_QSTR_SD_MISO), MP_ROM_PTR(&pin_GPIO20) },
@@ -96,4 +104,5 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_SPI), MP_ROM_PTR(&board_spi_obj) },
     { MP_ROM_QSTR(MP_QSTR_UART), MP_ROM_PTR(&board_uart_obj) },
 };
+
 MP_DEFINE_CONST_DICT(board_module_globals, board_module_globals_table);
