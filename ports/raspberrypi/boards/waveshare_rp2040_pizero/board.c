@@ -34,10 +34,10 @@ void board_init(void) {
     picodvi_framebuffer_obj_t *fb = &allocate_display_bus()->picodvi;
     fb->base.type = &picodvi_framebuffer_type;
     common_hal_picodvi_framebuffer_construct(fb, 320, 240,
-        &pin_GPIO7, &pin_GPIO6,
-        &pin_GPIO9, &pin_GPIO8,
-        &pin_GPIO11, &pin_GPIO10,
-        &pin_GPIO13, &pin_GPIO12,
+        &pin_GPIO28, &pin_GPIO29,
+        &pin_GPIO26, &pin_GPIO27,
+        &pin_GPIO24, &pin_GPIO25,
+        &pin_GPIO22, &pin_GPIO23,
         8);
 
     framebufferio_framebufferdisplay_obj_t *display = &displays[0].framebuffer_display;
